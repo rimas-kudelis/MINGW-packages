@@ -1,0 +1,23 @@
+--- old/zim/fs.py	2015-10-04 20:05:14.000000000 +0300
++++ new/zim/fs.py	2016-11-26 16:25:11.258751500 +0200
+@@ -1918,20 +1918,6 @@
+ 
+ if hasattr(os, 'replace'):
+ 	_replace_file = os.replace
+-elif sys.platform == 'win32':
+-	import win32api, win32con
+-	def _replace_file(src, dst):
+-		# True atomic replace, if supported
+-		try:
+-			win32api.MoveFileEx(src, dst, win32con.MOVEFILE_REPLACE_EXISTING)
+-		except:
+-			# Sometimes it fails - we play stupid and try again...
+-			time.sleep(0.5)
+-			win32api.MoveFileEx(src, dst, win32con.MOVEFILE_REPLACE_EXISTING)
+-
+-		# Fall back using 2-file shuffle approach
+-		#~ bak = dst + '.zim-bak~'
+-		#~ win32api.ReplaceFile(src, dst, bak, 0)
+ else:
+ 	_replace_file = os.rename
+ 

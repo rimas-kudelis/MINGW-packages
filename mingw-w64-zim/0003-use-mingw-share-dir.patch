@@ -1,0 +1,21 @@
+--- old/zim/config/basedirs.py	2015-10-27 21:05:51.000000000 +0200
++++ new/zim/config/basedirs.py	2016-11-28 15:44:34.481971300 +0200
+@@ -47,12 +47,17 @@
+ 
+ 	if os.name == 'nt':
+ 		APPDATA = environ['APPDATA']
++		MINGW_PREFIX = environ.get('MINGW_PREFIX')
+ 
+ 		XDG_DATA_HOME = Dir(
+ 			environ.get('XDG_DATA_HOME', APPDATA + r'\zim\data'))
+ 
++		default_data_dirs = ['~/.local/share']
++		if (MINGW_PREFIX):
++			default_data_dirs.insert(0, MINGW_PREFIX + r'/share')
++
+ 		XDG_DATA_DIRS = map(Dir,
+-			environ.get_list('XDG_DATA_DIRS', '~/.local/share/')) # Backwards compatibility
++			environ.get_list('XDG_DATA_DIRS', default_data_dirs)) # Backwards compatibility
+ 
+ 		XDG_CONFIG_HOME = Dir(
+ 			environ.get('XDG_CONFIG_HOME', APPDATA + r'\zim\config'))

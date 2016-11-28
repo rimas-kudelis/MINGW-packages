@@ -1,0 +1,11 @@
+--- old/setup.py	2015-09-26 10:18:02.000000000 +0300
++++ new/setup.py	2016-11-28 15:20:03.769442900 +0200
+@@ -225,7 +225,7 @@
+ 
+ 	def run(self):
+ 		build_scripts_class.run(self)
+-		if os.name == 'posix' and not self.dry_run:
++		if not self.dry_run:
+ 			for script in self.scripts:
+ 				if script.endswith('.py'):
+ 					file = os.path.join(self.build_dir, script)

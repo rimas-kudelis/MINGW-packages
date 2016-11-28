@@ -1,0 +1,72 @@
+_realname=zim
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=0.65
+pkgrel=1
+pkgdesc="A WYSIWYG text editor that aims at bringing the concept of a wiki to the desktop."
+arch=('any')
+license=('GPL' 'PerlArtistic')
+url="http://zim-wiki.org/"
+makedepends=("${MINGW_PACKAGE_PREFIX}-python2-setuptools")
+depends=("${MINGW_PACKAGE_PREFIX}-python2-pygtk"
+         "${MINGW_PACKAGE_PREFIX}-sqlite3")
+optdepends=('bzr: Version Control plugin'
+            'git: Version Control plugin'
+            'mercurial: Version Control plugin'
+            'gnuplot: Insert Gnuplot plugin'
+            'ditaa: Insert Ditaa plugin'
+            'graphviz: Insert Diagram & Link Map plugins'
+            'python2-gtkspell: Spell Checker plugin'
+            'r: Insert GNU R Plot plugin'
+            'scrot: Insert Screenshot plugin'
+            'zeitgeist: Log events with Zeitgeist plugin'
+            'lilypond: Insert Score plugin'
+            'mingw-w64-i686-pygtksourceview2: Source View plugin'
+            'texlive-bin: Insert Equation plugin')
+conflicts=("${MINGW_PACKAGE_PREFIX}-zim-bzr")
+source=("http://zim-wiki.org/downloads/${_realname}-${pkgver}.tar.gz"
+        "0001-dont-use-win32api.patch"
+        "0002-rename-zim-py.patch"
+        "0003-use-mingw-share-dir.patch")
+sha256sums=('5442f3334395a2beafc5b9a2bbec2e53e38270d4bad696b5c4053dd51dc1ed96'
+            '7478ab59aa6689ca61b9e193130e1229604ae34bf1aa69d255a4ee13c34b661a'
+            '2247da3eade24f3f2c7a2c3757bdf484752399133d02864156ece37e8b95c127'
+            '8a039068af396682527cfeba50603ecb8989baa33fc599b31c87b17af15c85ae')
+
+prepare() {
+  cd "${srcdir}"/"${_realname}-${pkgver}"
+  patch -p1 -i ${srcdir}/0001-dont-use-win32api.patch
+  patch -p1 -i ${srcdir}/0002-rename-zim-py.patch
+  patch -p1 -i ${srcdir}/0003-use-mingw-share-dir.patch
+}
+
+build() {
+  cd "${srcdir}"
+  [[ -d build-${MINGW_CHOST} ]] && rm -rf build-${MINGW_CHOST}
+  cp -rf "${_realname}-${pkgver}" build-${MINGW_CHOST}
+  cd build-${MINGW_CHOST}
+
+  # python2 fixes
+  for file in zim/inc/xdot.py zim/_version.py; do
+    sed -i 's|#!/usr/bin/env python|#!/usr/bin/env python2.exe|' $file
+  done
+
+  sed -i 's|\t\tinstall_class.run(self)|&\n\t\treturn None|' setup.py
+  echo ${MINGW_PREFIX}/bin/python2 setup.py build
+
+  ${MINGW_PREFIX}/bin/python2 setup.py build
+}
+
+package() {
+  cd "${srcdir}/build-${MINGW_CHOST}"
+
+  MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
+  ${MINGW_PREFIX}/bin/python2 setup.py install \
+    --prefix=${MINGW_PREFIX} --root=${pkgdir} --optimize=1 --skip-build
+
+  # fix python command in files and shadowing of the application modules
+  local _mingw_prefix=$(cygpath -m "${MINGW_PREFIX}")
+  for _f in "${pkgdir}${MINGW_PREFIX}"/bin/*; do
+    sed -e "s|${_mingw_prefix}|${MINGW_PREFIX}|g" -i ${_f}
+  done
+}
